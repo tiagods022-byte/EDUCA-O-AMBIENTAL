@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>♻️ Quiz Ambiental - Desafio Sustentável ♻️</title>
+<style>
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(to bottom, #e0f7fa, #b2ebf2);
+    overflow-x: hidden;
+  }
+
+  /* Tela de abertura */
+  #abertura {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(circle, #006064, #004d40);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    animation: fadeOut 1s ease-out forwards;
+    animation-delay: 3s;
+    z-index: 10;
+  }
+  #abertura h1 {
+    font-size: 4em;
+    text-shadow: 0 0 20px #00bcd4, 0 0 40px #00e5ff;
+    animation: spin3D 3s ease-in-out;
+  }
+  @keyframes spin3D {
+    0% { transform: rotateY(0deg) scale(0.7); opacity: 0; }
+    50% { transform: rotateY(180deg) scale(1.1); opacity: 1; }
+    100% { transform: rotateY(360deg) scale(1); opacity: 1; }
+  }
+  @keyframes fadeOut {
+    to { opacity: 0; visibility: hidden; }
+  }
+
+  /* Cadastro */
+  #cadastro {
+    display: none;
+    text-align: center;
+    padding: 50px 20px;
+  }
+  #cadastro input {
+    padding: 10px;
+    font-size: 16px;
+    margin: 10px;
+    width: 200px;
+    border-radius: 5px;
+    border: 2px solid #00796b;
+  }
+  #cadastro button {
+    padding: 10px 25px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #00796b;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    transition: background 0.3s, transform 0.2s;
+  }
+  #cadastro button:hover {
+    background-color: #004d40;
+    transform: scale(1.05);
+  }
+
+  /* Quiz */
+  #quiz {
+    display: none;
+    text-align: center;
+    padding: 20px;
+  }
+  #pergunta {
+    font-size: 24px;
+    margin: 20px;
+    font-weight: bold;
+  }
+  .opcoes button {
+    margin: 10px;
+    padding: 12px 24px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 8px;
+    border: none;
+    background-color: #80deea;
+    transition: background 0.3s, transform 0.2s;
+  }
+  .opcoes button:hover {
+    background-color: #26c6da;
+    transform: scale(1.05);
+  }
+  .correta {
+    background-color: #4caf50 !important;
+    color: white;
+  }
+  .errada {
+    background-color: #e53935 !important;
+    color: white;
+  }
+
+  #placar {
+    display: flex;
+    justify-content: space-between;
+    margin: 20px;
+    font-size: 18px;
+    font-weight: bold;
+  }
+  #cronometro {
+    font-size: 20px;
+    margin: 10px;
+    color: #d84315;
+  }
+  #feedback {
+    font-size: 20px;
+    margin-top: 15px;
+    font-weight: bold;
+  }
+
+  #fim, #avisorelampago {
+    display: none;
+    text-align: center;
+    padding: 40px;
+  }
+  #fim h2 {
+    color: green;
+    font-size: 28px;
+  }
+  #avisorelampago h2 {
+    font-size: 24px;
+    color: #e65100;
+  }
+
+  /* Responsividade */
+  @media (max-width: 600px) {
+    #pergunta { font-size: 20px; }
+    .opcoes button { width: 90%; font-size: 14px; }
+    #placar { flex-direction: column; align-items: center; }
+  }
+</style>
+</head>
+<body>
+<div id="abertura">
+  <h1>🌱 Quiz Ambiental 🌎</h1>
+</div>
+
+<div id="cadastro">
+  <h2>Cadastro dos Jogadores</h2>
+  <input type="text" id="jogador1" placeholder="Nome do Jogador 1" required>
+  <input type="text" id="jogador2" placeholder="Nome do Jogador 2" required>
+  <br><br>
+  <button onclick="validarCadastro()">Começar</button>
+</div>
+
+<div id="quiz">
+  <div id="placar">
+    <div id="placar1">Jogador 1: 0</div>
+    <div id="cronometro">⏳ Tempo: 10</div>
+    <div id="placar2">Jogador 2: 0</div>
+  </div>
+  <h2 id="pergunta">Pergunta</h2>
+  <div class="opcoes" id="opcoes"></div>
+  <div id="feedback"></div>
+</div>
+
+<div id="fim">
+  <h2 id="resultadoFinal"></h2>
+  <p id="detalhesPontuacao"></p>
+  <button onclick="location.reload()">Jogar Novamente</button>
+</div>
+
+<div id="avisorelampago">
+  <h2 id="mensagemRelampago">Rodada Relâmpago em 10s...</h2>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script>
+  const perguntas = [
+    { pergunta: "Qual destes materiais é reciclável?", opcoes: ["Papel sujo de gordura", "Garrafa PET", "Restos de comida", "Bituca de cigarro"], resposta: "Garrafa PET" },
+    { pergunta: "Qual é a cor da lixeira para papel?", opcoes: ["Azul", "Verde", "Amarela", "Marrom"], resposta: "Azul" },
+    { pergunta: "O que significa a sigla RSU?", opcoes: ["Resíduos Sólidos Urbanos", "Reciclagem Sustentável Urbana", "Resto Seco Utilizável", "Reutilização Simples e Única"], resposta: "Resíduos Sólidos Urbanos" },
+    { pergunta: "Qual é a melhor forma de descartar óleo de cozinha?", opcoes: ["Na pia", "No lixo comum", "No ralo do banheiro", "Levar para ponto de coleta"], resposta: "Levar para ponto de coleta" },
+    { pergunta: "Qual item abaixo é orgânico?", opcoes: ["Garrafa de vidro", "Lata de refrigerante", "Casca de banana", "Embalagem plástica"], resposta: "Casca de banana" }
+  ];
+
+  const perguntasDif = [
+    { pergunta: "Qual gás é responsável pelo efeito estufa?", opcoes: ["Oxigênio", "Gás Carbônico", "Hidrogênio", "Nitrogênio"], resposta: "Gás Carbônico" },
+    { pergunta: "O que é compostagem?", opcoes: ["Separar plástico do papel", "Processo de decomposição de matéria orgânica", "Filtrar água da chuva", "Compactar resíduos"], resposta: "Processo de decomposição de matéria orgânica" },
+    { pergunta: "Qual recurso é considerado renovável?", opcoes: ["Petróleo", "Carvão", "Sol", "Gás natural"], resposta: "Sol" }
+  ];
+
+  const perguntasDif2 = [
+    { pergunta: "Qual destas ações contribui mais para o aquecimento global?", opcoes: ["Andar de bicicleta", "Desmatamento", "Usar energia solar", "Reciclar papel"], resposta: "Desmatamento" },
+    { pergunta: "Quanto tempo leva uma garrafa de vidro para se decompor na natureza?", opcoes: ["1 ano", "50 anos", "500 anos", "Tempo indeterminado"], resposta: "Tempo indeterminado" },
+    { pergunta: "Qual o principal objetivo da Agenda 2030 da ONU?", opcoes: ["Criar leis ambientais", "Eliminar o lixo plástico", "Promover desenvolvimento sustentável", "Controlar o clima"], resposta: "Promover desenvolvimento sustentável" }
+  ];
+
+  const somAcerto = new Audio("https://assets.mixkit.co/active_storage/sfx/2015/2015-preview.mp3");
+  const somErro = new Audio("https://assets.mixkit.co/active_storage/sfx/2012/2012-preview.mp3");
+  const somCronometro = new Audio("https://assets.mixkit.co/active_storage/sfx/2035/2035-preview.mp3");
+
+  let jogador1 = "";
+  let jogador2 = "";
+  let pontos1 = 0;
+  let pontos2 = 0;
+  let indicePergunta = 0;
+  let turno = 1;
+  let tempo = 10;
+  let cronometro;
+  let rodadaRelampago = 0;
+  let perguntasRodada = [];
+  let inicioTurno;
+
+  setTimeout(() => {
+    document.getElementById('abertura').style.display = 'none';
+    document.getElementById('cadastro').style.display = 'block';
+  }, 3500);
+
+  function validarCadastro() {
+    jogador1 = document.getElementById("jogador1").value.trim();
+    jogador2 = document.getElementById("jogador2").value.trim();
+    if (!jogador1 || !jogador2) {
+      alert("Preencha os nomes dos dois jogadores.");
+      return;
+    }
+    document.getElementById("cadastro").style.display = "none";
+    document.getElementById("quiz").style.display = "block";
+    perguntasRodada = perguntas;
+    atualizarPlacar();
+    mostrarPergunta();
+  }
+
+  function atualizarPlacar() {
+    document.getElementById("placar1").innerText = `${jogador1}: ${pontos1}`;
+    document.getElementById("placar2").innerText = `${jogador2}: ${pontos2}`;
+  }
+
+  function iniciarCronometro() {
+    document.getElementById("cronometro").innerText = `⏳ Tempo: ${tempo}`;
+    clearInterval(cronometro);
+    let tempoRestante = tempo;
+    inicioTurno = Date.now();
+    cronometro = setInterval(() => {
+      tempoRestante--;
+      document.getElementById("cronometro").innerText = `⏳ Tempo: ${tempoRestante}`;
+      if (tempoRestante <= 3 && tempoRestante > 0) somCronometro.play();
+      if (tempoRestante <= 0) {
+        clearInterval(cronometro);
+        document.getElementById("feedback").innerText = "⏱️ Tempo esgotado!";
+        avancarTurno();
+      }
+    }, 1000);
+  }
+
+  function mostrarPergunta() {
+    if (indicePergunta >= perguntasRodada.length) {
+      return encerrarJogo();
+    }
+    const p = perguntasRodada[indicePergunta];
+    const nomeTurno = turno === 1 ? jogador1 : jogador2;
+    document.getElementById("pergunta").innerText = `Vez de ${nomeTurno}: ${p.pergunta}`;
+    const opcoesDiv = document.getElementById("opcoes");
+    opcoesDiv.innerHTML = "";
+    document.getElementById("feedback").innerText = "";
+    p.opcoes.forEach(op => {
+      const btn = document.createElement("button");
+      btn.innerText = op;
+      btn.onclick = () => responder(btn, op, Date.now());
+      opcoesDiv.appendChild(btn);
+    });
+    iniciarCronometro();
+  }
+
+  function responder(botao, resposta, tempoResposta) {
+    clearInterval(cronometro);
+    const p = perguntasRodada[indicePergunta];
+    const acertou = resposta === p.resposta;
+    const tempoGasto = Math.floor((Date.now() - inicioTurno) / 1000);
+    document.querySelectorAll("#opcoes button").forEach(btn => {
+      if (btn.innerText === p.resposta) btn.classList.add("correta");
+      else if (btn === botao) btn.classList.add("errada");
+      btn.disabled = true;
+    });
+    if (acertou) {
+      somAcerto.play();
+      let pontosGanhos = 1;
+      if (rodadaRelampago === 1 && tempoGasto <= 5) pontosGanhos = 2;
+      if (rodadaRelampago === 2 && tempoGasto <= 3) pontosGanhos = 3;
+      document.getElementById("feedback").innerText = `✅ Acertou! (+${pontosGanhos})`;
+      if (turno === 1) pontos1 += pontosGanhos;
+      else pontos2 += pontosGanhos;
+    } else {
+      somErro.play();
+      document.getElementById("feedback").innerText = `❌ Errou! Resposta correta: ${p.resposta}`;
+    }
+    atualizarPlacar();
+    setTimeout(avancarTurno, 1500);
+  }
+
+  function avancarTurno() {
+    if (turno === 1) turno = 2;
+    else {
+      turno = 1;
+      indicePergunta++;
+    }
+    mostrarPergunta();
+  }
+
+  function encerrarJogo() {
+    if (rodadaRelampago < 2 && pontos1 === pontos2) {
+      iniciarRelampago();
+      return;
+    }
+    document.getElementById("quiz").style.display = "none";
+    document.getElementById("fim").style.display = "block";
+    let vencedor;
+    if (pontos1 > pontos2) { vencedor = `🏆 ${jogador1} venceu!`; confetti(); }
+    else if (pontos2 > pontos1) { vencedor = `🏆 ${jogador2} venceu!`; confetti(); }
+    else vencedor = "🤝 Empate total!";
+    document.getElementById("resultadoFinal").innerText = vencedor;
+    document.getElementById("detalhesPontuacao").innerText = `${jogador1}: ${pontos1} pontos\n${jogador2}: ${pontos2} pontos`;
+  }
+
+  function iniciarRelampago() {
+    rodadaRelampago++;
+    document.getElementById("quiz").style.display = "none";
+    document.getElementById("fim").style.display = "none";
+    document.getElementById("avisorelampago").style.display = "block";
+    document.getElementById("mensagemRelampago").innerText = `Empate! Rodada Relâmpago ${rodadaRelampago} em 10s...`;
+    let count = 10;
+    const timer = setInterval(() => {
+      count--;
+      document.getElementById("mensagemRelampago").innerText = `Rodada Relâmpago ${rodadaRelampago} em ${count}s...`;
+      if (count <= 0) {
+        clearInterval(timer);
+        document.getElementById("avisorelampago").style.display = "none";
+        tempo = rodadaRelampago === 1 ? 5 : 3;
+        perguntasRodada = rodadaRelampago === 1 ? perguntasDif : perguntasDif2;
+        indicePergunta = 0;
+        document.getElementById("quiz").style.display = "block";
+        mostrarPergunta();
+      }
+    }, 1000);
+  }
+</script>
+</body>
+</html>
